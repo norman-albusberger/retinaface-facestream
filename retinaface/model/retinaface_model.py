@@ -52,22 +52,10 @@ def load_weights(model: Model):
         model (Model): retinaface model with its structure and pre-trained weights
 
     """
-    home = str(os.getenv("DEEPFACE_HOME", default=str(Path.home())))
+    home = str(os.getenv("MODEL_HOME", default=str(Path.home())))
 
-    exact_file = home + "/.deepface/weights/retinaface.h5"
+    exact_file = home + "retinaface.h5"
     url = "https://github.com/serengil/deepface_models/releases/download/v1.0/retinaface.h5"
-
-    # -----------------------------
-
-    if not os.path.exists(home + "/.deepface"):
-        os.mkdir(home + "/.deepface")
-        logger.info(f"Directory {home}/.deepface created")
-
-    if not os.path.exists(home + "/.deepface/weights"):
-        os.mkdir(home + "/.deepface/weights")
-        logger.info(f"Directory {home}/.deepface/weights created")
-
-    # -----------------------------
 
     if os.path.isfile(exact_file) is not True:
         logger.info(f"retinaface.h5 will be downloaded from the url {url}")
