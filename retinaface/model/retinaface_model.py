@@ -54,7 +54,7 @@ def load_weights(model: Model):
     """
     home = str(os.getenv("MODEL_HOME", default=str(Path.home())))
 
-    exact_file = home + "retinaface.h5"
+    exact_file = os.path.join(home, 'retinaface.h5')
     url = "https://github.com/serengil/deepface_models/releases/download/v1.0/retinaface.h5"
 
     if os.path.isfile(exact_file) is not True:
