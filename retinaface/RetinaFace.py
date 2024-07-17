@@ -39,6 +39,7 @@ if tf_version == 2:
 else:
     from keras.models import Model
 
+
 # ---------------------------
 
 
@@ -59,10 +60,10 @@ def build_model() -> Any:
 
 
 def detect_faces(
-    img_path: Union[str, np.ndarray],
-    threshold: float = 0.9,
-    model: Optional[Model] = None,
-    allow_upscaling: bool = True,
+        img_path: Union[str, np.ndarray],
+        threshold: float = 0.9,
+        model: Optional[Model] = None,
+        allow_upscaling: bool = True,
 ) -> Dict[str, Any]:
     """
     Detect the facial area for a given image
@@ -127,7 +128,7 @@ def detect_faces(
     for _, s in enumerate(_feat_stride_fpn):
         # _key = f"stride{s}"
         scores = net_out[sym_idx]
-        scores = scores[:, :, :, _num_anchors[f"stride{s}"] :]
+        scores = scores[:, :, :, _num_anchors[f"stride{s}"]:]
 
         bbox_deltas = net_out[sym_idx + 1]
         height, width = bbox_deltas.shape[1], bbox_deltas.shape[2]
@@ -214,12 +215,12 @@ def detect_faces(
 
 
 def extract_faces(
-    img_path: Union[str, np.ndarray],
-    threshold: float = 0.9,
-    model: Optional[Model] = None,
-    align: bool = True,
-    allow_upscaling: bool = True,
-    expand_face_area: int = 0,
+        img_path: Union[str, np.ndarray],
+        threshold: float = 0.9,
+        model: Optional[Model] = None,
+        align: bool = True,
+        allow_upscaling: bool = True,
+        expand_face_area: int = 0,
 ) -> list:
     """
     Extract detected and aligned faces
@@ -266,7 +267,7 @@ def extract_faces(
             w = min(img.shape[1] - x, expanded_w)
             h = min(img.shape[0] - y, expanded_h)
 
-        facial_img = img[y : y + h, x : x + w]
+        facial_img = img[y: y + h, x: x + w]
 
         if align is True:
             landmarks = identity["landmarks"]
@@ -286,9 +287,56 @@ def extract_faces(
                 (x, y, x + w, y + h), rotate_angle, rotate_direction, (img.shape[0], img.shape[1])
             )
             facial_img = aligned_img[
-                int(rotated_y1) : int(rotated_y2), int(rotated_x1) : int(rotated_x2)
-            ]
+                         int(rotated_y1): int(rotated_y2), int(rotated_x1): int(rotated_x2)
+                         ]
 
         resp.append(facial_img[:, :, ::-1])
 
     return resp
+
+
+def compare_faces(known_face, face_data):
+    """
+    Compare two faces based on their landmarks by normalizing the landmarks
+    using the bounding box and calculating the Euclidean distance between them.
+
+    Args:
+        known_face (dict): A dictionary containing the landmarks and facial area of a known face.
+        face_data (dict): A dictionary containing the landmarks and facial area of the face to compare.
+
+    Returns:
+        float: The Euclidean distance between the normalized landmarks of the two faces.
+    """
+
+    # Extract landmarks from both faces
+    known_landmarks = known_face['landmarks']
+    landmarks = face_data['landmarks']
+
+    # Extract bounding boxes for both faces
+    # Default bounding box is [0, 0, 1, 1] if not provided
+    known_bbox = known_face.get('facial_area', [0, 0, 1, 1])
+    bbox = face_data.get('facial_area', [0, 0, 1, 1])
+
+    # Normalize the landmarks based on the bounding box
+    # This is done by translating the coordinates such that the top-left corner
+    # of the bounding box is (0, 0) and scaling the coordinates by the width and height of the bounding box.
+    known_landmarks_array = np.array([
+        [(x - known_bbox[0]) / (known_bbox[2] - known_bbox[0]),
+         (y - known_bbox[1]) / (known_bbox[3] - known_bbox[1])]
+        for x, y in known_landmarks.values()
+    ])
+    landmarks_array = np.array([
+        [(x - bbox[0]) / (bbox[2] - bbox[0]),
+         (y - bbox[1]) / (bbox[3] - bbox[1])]
+        for x, y in landmarks.values()
+    ])
+
+    # Log the normalized landmarks for debugging purposes
+    logging.debug(f"Normalized known landmarks: {known_landmarks_array}")
+    logging.debug(f"Normalized input landmarks: {landmarks_array}")
+
+    # Calculate the Euclidean distance between the normalized landmarks of the two faces
+    # The Euclidean distance is a measure of the "straight line" distance between two points in Euclidean space.
+    distance = np.linalg.norm(known_landmarks_array - landmarks_array)
+
+    return distance
