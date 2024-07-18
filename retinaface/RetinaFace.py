@@ -331,10 +331,6 @@ def compare_faces(known_face, face_data):
         for x, y in landmarks.values()
     ])
 
-    # Log the normalized landmarks for debugging purposes
-    logging.debug(f"Normalized known landmarks: {known_landmarks_array}")
-    logging.debug(f"Normalized input landmarks: {landmarks_array}")
-
     # Calculate the Euclidean distance between the normalized landmarks of the two faces
     # The Euclidean distance is a measure of the "straight line" distance between two points in Euclidean space.
     distance = np.linalg.norm(known_landmarks_array - landmarks_array)
