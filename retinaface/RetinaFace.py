@@ -44,27 +44,25 @@ else:
 # ---------------------------
 
 
-def build_model() -> Any:
-    """
-    Builds retinaface model once and store it into memory
-    """
-    # pylint: disable=invalid-name
-    global model  # singleton design pattern
+class ModelBuilder:
+    _model_instance = None
 
-    if not "model" in globals():
-        model = tf.function(
-            retinaface_model.build_model(),
-            input_signature=(tf.TensorSpec(shape=[None, None, None, 3], dtype=np.float32),),
-        )
-
-    return model
+    @staticmethod
+    def build_model() -> Model:
+        """
+        Builds retinaface model once and stores it in memory.
+        Ensures thread safety and avoids global variables.
+        """
+        if ModelBuilder._model_instance is None:
+            ModelBuilder._model_instance = retinaface_model.build_model()
+        return ModelBuilder._model_instance
 
 
 # Implementing the extract_faces function
 def extract_faces(
         img_path: Union[str, np.ndarray],
         threshold: float = 0.9,
-        model: Optional[Model] = None,
+        alt_model: Optional[Model] = None,
         align: bool = True,
         allow_upscaling: bool = True,
         expand_face_area: int = 0,
@@ -73,11 +71,13 @@ def extract_faces(
 
     img = preprocess.get_image(img_path)
 
-    if model is None:
-        model = build_model()
+    if alt_model is None:
+        model = ModelBuilder.build_model()
+    else:
+        model = alt_model
 
     obj = detect_faces(
-        img_path=img, threshold=threshold, model=model, allow_upscaling=allow_upscaling
+        img_path=img, threshold=threshold, alt_model=model, allow_upscaling=allow_upscaling
     )
 
     if not isinstance(obj, dict):
@@ -126,19 +126,19 @@ def extract_faces(
     return resp
 
 
-
-
 def detect_faces(
         img_path: Union[str, np.ndarray],
         threshold: float = 0.9,
-        model: Optional[Model] = None,
+        alt_model: Optional[Model] = None,
         allow_upscaling: bool = True,
 ) -> Dict[str, Any]:
     resp = {}
     img = preprocess.get_image(img_path)
 
-    if model is None:
-        model = build_model()
+    if alt_model is None:
+        model = ModelBuilder.build_model()
+    else:
+        model = alt_model
 
     nms_threshold = 0.4
     decay4 = 0.5
