@@ -43,7 +43,6 @@ else:
 
 # ---------------------------
 
-
 class ModelBuilder:
     _model_instance = None
 
