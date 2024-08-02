@@ -126,6 +126,8 @@ def extract_faces(
     return resp
 
 
+
+
 def detect_faces(
         img_path: Union[str, np.ndarray],
         threshold: float = 0.9,
